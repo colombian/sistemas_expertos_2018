@@ -185,3 +185,63 @@ wpar <- n2w(c(1,1,1,1),c(0.5,0.17, 0.22, 1-0.5-0.17-0.22))
 oli2<-w2n(nlm(mllk,wpar,x)$estimate)
 oli2
 ```
+
+
+
+
+
+
+## Estimación por maximización direta del likelihood
+
+El likelihood de una Cadena de Markov Escondida (HMM), se puede representar por la siguiente ecuación:
+$$L_t = P_r (X^{(T)} = x^{(T)}) = \delta P(x_1) \Gamma P(x_2) ... \Gamma P(x_T)1'$$
+
+Siendo $\delta$ la distribución inicial y $P(x)$ la matriz diagonal de $m*m$ con densidad de probabilidad $p_i(x)$
+
+$L_T$ se puede calcular como $L_T = \alpha_T1'$ tomando $\alpha_1 = \delta P(x_1)$ y de forma recursiva:
+
+$\alpha_t = \alpha_{t-1} \Gamma P(x_t),$ para  $t=2,3,...,T$
+
+Si la cadena de Markov se asume como estacionaria $(\delta=\delta \Gamma)$, en ese caso $\alpha_0 = \delta$, por lo tanto:
+
+$\alpha_t = \alpha_{t-1} \Gamma P(x_t),$ para  $t=1,2,...,T$
+
+
+## Escalación del cálculo del likelihood
+
+El likelihood es un producto de matrices, no de escalares, es por ello que no se puede simplemente calcular el log del likelihood como la suma de los logs de todos sus factores. Se sugiere un método de cálcular el lokelihood que supone $log(p+q)$, en donde $p>q$, 
+
+$$log(p+q) = log(p)+log(1 + q/p) = log(p)+log(1+exp(log(q)-log(p)))$$
+
+El logaritmo de $L_T$ se calcula escalando el vector de probabilidades $\alpha_t$, es por ello que el vector se escala en cada $t$ entonces sus elementos se suman a 1, manteniendo la sumatoria de los logs de los factores escalados. Por lo tanto el $log(L_T)$ se puede definir como:
+
+$$log(L_T) = \sum_{t=1}^T log(w_t/w_{t-1}) = \sum_{t=1}^T log(\phi_{t-1}\Gamma P(x_t)1')$$
+
+Para calcular el log-lokelihood de las observaciones $x_1, x_2,...,x_t$ dentro del modelo Poisson-HMM con almenos 2 estados, con matriz de probabilidades de transición $\Gamma$, vector de medias de estados dependientes $\lambda$, y distribución inicial $\delta$, se utiliza el siguiente códogi implementado en R.
+
+```{r}
+alpha <- oli2$delta * dpois(x[1], oli2$lambda)
+lscale <- log(sum(alpha))
+alpha <- alpha/sum(alpha)
+
+for (i in 2:T) {
+  alpha <- alpha %*% Gamma*as.numeric(dpois(x[i], oli2$lambda))
+  lscale <- lscale+log(sum(alpha))
+  alpha <- alpha/sum(alpha)
+}
+lscale
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+

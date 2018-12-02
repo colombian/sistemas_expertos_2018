@@ -25,3 +25,20 @@ wpar <- n2w(c(1,1,1,1),c(0.5,0.17, 0.22, 1-0.5-0.17-0.22))
 oli2<-w2n(nlm(mllk,wpar,x)$estimate)
 oli2
 
+
+
+
+
+
+alpha <- oli2$delta * dpois(x[1], oli2$lambda)
+lscale <- log(sum(alpha))
+alpha <- alpha/sum(alpha)
+
+for (i in 2:T) {
+  alpha <- alpha %*% Gamma*as.numeric(dpois(x[i], oli2$lambda))
+  lscale <- lscale+log(sum(alpha))
+  alpha <- alpha/sum(alpha)
+}
+lscale
+
+
