@@ -25,5 +25,3 @@ wpar <- n2w(c(1,1,1,1),c(0.5,0.17, 0.22, 1-0.5-0.17-0.22))
 oli2<-w2n(nlm(mllk,wpar,x)$estimate)
 oli2
 
-
-# ejemplos
