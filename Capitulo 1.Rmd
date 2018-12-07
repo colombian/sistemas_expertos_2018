@@ -240,3 +240,40 @@ La probabilidad no condicionada $Pc(C_t=j)$ de una cadena de Markov, en un estad
 $u(t)=(Pr(C_t=1),...,Pr(C_t=m)), \in \mathbb{N}$ Es decir nos permite saber el estado actual de la matriz. sinedo $u(1)$ la distribucion incial de la matriz, para deducir la distribucion  en el tiempo $t+1$ desde $t$ solo multiplicamos por la mariz de probabilidad de transición:
 $$u(t+1)=u(1)\Gamma$$
 ### Distribuciones Estacionarias
+Una cadena de Markov con matriz de probabilidad de transición $\Gamma$ se dice que tiene una distribución $\detla$ (un vector fila con elementos no negativos) si $\delta\Gamma=\delta$ y $\delta1'=1$.
+
+El primer requerimiento expresa la estacionalidad y el segundo que $\delta$ es de echo una distribución de probabilidad.
+
+La matriz
+$$\begin{pmatrix}
+1/3 & 1/3 & 1/3 \\
+2/2 & 0 & 1/3 \\
+1/2 & 1/2 & 0 \\
+\end{pmatrix}$$
+
+Tiene una distribucion estacionaria $\delta=\frac{1}{32}(15,9,8)$. Siendo que $u(t+1)=u(t)\Gamma$ una cadena de Markov empezando desde esta distribucion tendra la misma distribucion en cualquier punto en el tiempo, esto es una matriz de Markov estacionaria.
+
+Una cadena de Markov irreducible (homogenea, discreta en tiempo, espacio de estados finitos) tiene una unica, strictamente positiva distribucion estacionaria. El vector $\delta$ con elementos no negtivos es una distribución estacionaria de la cadena de Markov con t.p.m $\Gamma$, si y solo si:
+$$\gamma(I_m-\Gamma +U)=1$$ 
+Donde 1 es un vector de unos, $I_m$ es la matriz identidad $m\times m$ y $U$ es la matriz $m\times m$ de unos.
+
+La matriz estacionaria puede ser encontrada removiendo una de las ecuaciones del sistema $\delta\Gamma=\delta$ y reemplazandola por $\sum_i\delta_i=1$
+
+### Funcion de Autorrelación
+
+Asumimos que los estados $1,2,..,m$ son cuantitativos y no categoricos, la funcion de autocorrelacion de ${C_t}$, se asume que es estacionaria e irreducible, se puede optener que:
+
+Primero, v=(1,2,...,$m$) y V=diag(1,2,...,$m$) tenemos los enteros no negativos $k$,
+$$Cov(C_t,C_t+k)0\delta V\Gamma^kv'-(\delta v')^2$$
+
+Si $\Gamma$ es diagonalizable, y los eigenvalores (diferentes a 1) se denotan por $\omega_2,\omega_3,...,\omega_m$, entonces $\Gamma$ puede ser escrito como: $$\Gamma=U\Omega U^-1$$
+Donde $\Omega$ es la diag($1,\omega_2,\omega_23,...,\omega_m$)  y U corresponde a los eigenvectores de $\Gamma$. Tenemos para los valores no negativos $k$
+$$Cov(C_t,C_{t+k})=\delta VU\Omega ^kU^{-1}v'-(\delta v')^2$$
+$$= a\Omega ^kb'-a_1b_1$$
+$$\sum_{i=2}^{m}a_ib_i\omega_i^k$$
+donde $a=\delta VU$ y $b'=U^{-1}v'$
+$$\rho(k)\equiv Corr(C_t,C_{t+k})=\frac{\sum_{i=2}^{m}a_ib_i\omega_i^k}{\sum_{i=2}^{m}a_ib_i}$$
+
+### Cadenas de Markov
+Una vez observamos una cdaenas de Markov y queremos estimar las probabilidades de transición, una solucion - pero no la única - is encontrar las transiciones y estimar las probabilidades como frecuencias relativas.
+
