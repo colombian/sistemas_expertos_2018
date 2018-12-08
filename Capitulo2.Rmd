@@ -1,0 +1,122 @@
+---
+output: html_document
+---
+
+## CAPITULO 2
+### Modelo de Markov escondidas
+### Definiciones y propiedades 
+
+#### Modelo simple de Markov escondido
+
+Conciderando los visto en la serie de terremotos en el capitulo anterior, se puede apreciar que las observaciones no tienen un limite de cantidad. Debido a esto, utilizar la distribución de Poisson es la decisión natural. En el capítulo uno se considero como puede afectar la interpretación de la serie como una mezcla de distribuciones de Poisson, Cada una con una media $\lambda_m$ donde m se refiere a la serie de datos y cada distribución tiene un posibilidad de $\delta_m$ donde 
+\[\sum_{ i = 1}^{\infty} \delta_i = 1\]
+
+
+Un modelo como una mezcla independiente se considera que no representara correctamente el modelo de los terremotos debido a que por definición estas mezcla no tienen dependecia alguna con los valores anteriores sin embargo de acuedo con los resultados de la gráfica ACF una dependencia muy baja entre las observaciones, pero por fines ilutrativos se obtendra el valor de la correlaciones. 
+
+
+```{r}
+library(dplyr)
+library(readxl)
+
+muestra <- read_xlsx("EarthQuakeData.xlsx", sheet="Sheet2", skip = 2)[-109,] %>% 
+  rename("x" = !!names(.[2])) %>% 
+  select(x)
+
+acf(muestra$x)
+```
+
+
+
+#### Lo Básico
+
+La cadena escondida de Markov es una mezcla particular debido a su dependencia. Donde toda observación $X_t$ tiene adicionalmente una categoria $C_t$ la cual se indica a cual de las distribuciones pertenece mientras que se puede calcular las probabilidades de la siguiente manera: 
+\[Pr(C_t|C_{t-1}),     t = 2,3..\]
+\[Pr(X_t|X_{t-1}, C_{})  t = 2,3.\]
+
+Para este modelo se deben considerar dos parametros, primero un parametro no observado del proceso, $C_t$ que satisface todas las propiedades de Markov, y un segundo parametro dependiente del estado, $X_t$ en el cual la distribución de $X$ depende unicamente de estado actual, $C$. 
+
+Si la cadena de Markov tiene m estados, entonces se le conoce como HMM de m-estados. En este caso estamos considerando que apesar que ya se calcularos los valores de $\delta_i$, existe adicionalemente una matriz de transición como:
+\[ \Gamma = 
+\begin{bmatrix}
+    \gamma_{11}       & \gamma_{12}  \\
+    \gamma_{21}       & \gamma_{22}  \\
+\end{bmatrix}\]
+
+En constraste, en un caso de mezclas independientes, la distribución de $C_t$, el estado en el tiempo $t$, si depende de $C_{t-1}$. Por lo tanto, para considerar como se pueden representar las distribuciones de maneras discretas y continuas se debe puede utilizar como base la siguiente expresión para el estado $i = 1,2,3..$ 
+\[p_i(x)= Pr(X_t=x | C_t = i) \]
+
+$p_i$ es la probabilidad de $X_t$ si la cadena de Markov esta en el estado $i$ en el momento $t$. En caso de variables continuas es necesarios considerar que la probabilidad como una funcion de densidad. A estas distribuciones $p_i$ se les consideran como distribuciones dependientes del estado, teniendose $m$ estados. 
+
+
+##### Distribución Marginal
+
+Ocacionalmente se necesita la distribución marginal de $X_t$ y distribuciones marginales más elevadas, tal como $(X_t, X_{t+k})$. Estos resultados deben ser deribados de los casos de la matrices homogenias pero que no son necesariamente estacionarias. 
+
+##### Univariate distributions 
+
+Para valores discretos observados $X_t$, definiendo $u_i(t) = Pr(C_t = i)$ para $t = 1,2 ...T$ se tiene
+
+\[Pr(X_t = x) = \sum_{i = 1}^{m} Pr(C_t = i) Pr(X_t = x| C_t = i) = \sum_{i = 1}^{m} u_i(t)p_i(x)
+\]
+
+La expreción se puede escribir de forma matricial de la siguiente manera:
+\[Pr(X_t = x) = (u_1(t)...u_m(t))\begin{bmatrix}
+    p_1(x)  &     & 0  \\
+      &   \ddots & \\
+    0   &    & p_m(x) \\
+\end{bmatrix} 
+
+\begin{bmatrix} 1 \\
+              \vdots \\
+              1 \\
+ \end{bmatrix} \]
+ 
+Donde $P(x)$ es definida como la diagonal de los $p_i(x)$. Considerando que $u_i(t) = u(1)\Gamma^{t-1}$, se obtiene: 
+\[Pr(X_t = x) = u(1)\Gamma^{t-1}P(x) 1^{`}\]
+
+
+Pero si se consideran el cambio de estado como una distribución estacionaria entonces de puede reescribir teniendo en cuenta que: $\delta\Gamma^{t-1} = \delta$ para todo $t \in \mathbb{N}$ se obtiene: 
+
+\[Pr(X_t = x) = \delta P(x)1^{`}\]
+
+
+#### Momentos 
+
+Primero debemos observar que:
+\[E(X_t) = \sum_{i=1}^{m}E(X_t|C_t=i)Pr(C_t=i)\]
+
+Que al considerarla como un caso estacionario seria:
+\[E(X_t) = \sum_{i=1}^{m}\delta_i E(X_t|C_t=i)\]
+
+Con vase a la ecuación de arriba y considerado las propiedades de los momentos y de las cadenas se obtinen los siguientes momentos:
+
+\[E(X_t) = \delta_1 \lambda_1 + \delta_2 \lambda_2\]
+\[Var(X_t) = E(X_t) \delta_1 \delta_2 ( \lambda_1 +\lambda_2)^2 > E(X_t)\]
+\[Cov(X_t, X_{t+k}) = \delta_1 \delta_2 ( \lambda_1 +\lambda_2)^2(1-\gamma_{12}-\gamma_{21})^k , For k \in \mathbb{N} \]
+
+Cabe mencionar que la formula resultante de la covarianza tiene una forma tal que cuando las medias son iguales $\lambda_1 = \lambda_2$  la covarianza se vuelve cero. 
+
+### Likelihood
+
+
+El objetivo de la sección desarrollar la formula  del likelihood $L_T$ de $T$ observaciones consecuentes asumiendo que son el resultado de una HMM de m estados, Esta formula existe pero para obtenerse el resultado es necesario calcular al rededor de $m^T$ terminimos de $2T$ factores, aparentando requerir $O(Tm^T)$. Sin embargo hace tiempo esta comprobado que se puede calcular con $O(Tm^2)$ operaciones. Esto es posible mediante la estimación de los parámetros por medio de optimización numérica.
+
+
+#### Likelihood en general 
+
+Consdierando que el likelihood de una HMM en general. Supongamos una secuencias de observacioens $x_1, x_2, .... x_T$ generador por este tipo de modelo. Se busca la probabilidad $L_T$ de observar esta secuencia, como calculado  bajo el modelo m-estado HMM que inicialmente tiene una distribución $\delta$ y $\Gamma$ de la cadena de Markov. 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
