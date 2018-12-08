@@ -277,3 +277,27 @@ $$\rho(k)\equiv Corr(C_t,C_{t+k})=\frac{\sum_{i=2}^{m}a_ib_i\omega_i^k}{\sum_{i=
 ### Cadenas de Markov
 Una vez observamos una cdaenas de Markov y queremos estimar las probabilidades de transición, una solucion - pero no la única - is encontrar las transiciones y estimar las probabilidades como frecuencias relativas.
 
+Suponiendo entonces, que queremos estimar $m^2-m$ parametros $\gamma_{ij} (i\neq j)$ de un estado $m$ de la cadena de Markov ${C_t}$ El "likelihood" condicionado de la primera observacion es:
+$$L=\prod_{i=1}^{m}\prod_{j=1}^{m}\gamma_{ij}^{f_{ij}}$$
+Siendo el Log de este:
+$$l=\sum_{i=1}^{m}(\sum_{j=1}^{m}f_{ij} log \gamma_{ij})=\sum_{i=1}_^{m}l_i$$
+
+y maximizamos $l$, maximizando cada $l_i$ por separado. Sustituyendo $1-\sum_{k\neq i} \gamma_{ik}$, diferenciando $l_i$ respecto a la diagonal de la probabilidad de transición $\gamma_{ij}$ e igualando a cero tenemos qque:
+$$0=\frac{-f_{if}}{1-\sum_{k\neq i}\gamma_{ik}}+\frac{f_{ij}}{\gamma_{ij}}=\frac{f_{ii}}{\gamma_ii}+\frac{f_{ij}}{\gamma_{ij}}$$
+A menos que un denominador sea cero, $f_{ij}\gamma_{ii}=f_{ii}\gamma_{ij}$ y $\sum_{j=1}^{m}f_{ij}=f_{ii}$. Esto implica que en el maximo del "likelihood", $$\gamma_{ii}=\frac{f_{ii}}{\sum_{j=1}^{m}f_{ij}}\text{ y } \gamma_{ij}=\frac{f_{ij}\gamma_{ii}}{f_{ii}}=\frac{f_{ii}}{\sum_{i=1}^{}m}f_ij$$
+El estimador $\gamma=\frac{f_{in}}{\sum_{k=1}^{m}f_{ik}(i,j=1,...,m)}$, es el la probabilidad de transicion empirica, El estimador $\Gamma$ satisface el requerimiento de la sumas de las filas se igual a 1
+
+Suponiendo la cadena de Markov ${C_t}$ toma valores 0 y 1, y deseasmosestimar las probabilidades de transicion $\gamma_{ij}$ de la secuencia de observaciones en que $f_{ij}$ transiciones del estado $i$ al estado $j$ ($i$,$j$=0,1) y $f_{11}>0$ pero $f_{00}=0$. entonces en las observaciones un cero es seguido por un uno. $c=f_{10}+(1-C_1)$ y $d=f_{11}$. Las probabilidades de transicions estan dadas por $$\gamma_{01}=1 \text{ y } \gamma_{10}=\frac{-(1+d)+((1+d)^2 +4c(c+d-1))^{\frac{1}{4}}}{2(c+d-1)}$$
+
+### Cadenas de Markov de orden superior
+
+En el caso donde las observaciones con estados finitos parece no satisfacer las propiedades de Markov, una alternativa es utiliza cadenas de Markov de orden superior, satisfaciendo:
+$$Pr(C_t|C_{t-1},C_{t-2,...})=Pr(C_t|C_{t-1},...,C_{t-1})$$
+Aunque el modelo no es una cadena de Markov per se, podemos redefinir el modelo de forma que el resultante lo sea. Si dejamos $Y_t=(C_{t-l+1},C_{t-l+2},...,C_t)$ entonces ${Y_t}$ es una cadena de Markov de primer orden en $M^t$ en el espacio de estados de ${C_t}$.
+
+Una cadena de Markov de segundo orden, es estacionaria si se caracteriza por las probabilidades de transicion:
+$$\gamma(i,l,k)=Pr(C-t=k|C_{t-1},C_{t_2}=i)$$ y tiene distribucion estacionaria bivariable $u(j,k)=Pr(C_{t-1}=j,C_t=k)$ satisfaciendo $$u(j,k)=\sum_{i=1}^{m}u(i,j)\gamma(i,j,k) \text{ y } \sum_{j=1}^{m}\sum_{k=1}^{m}u(j,k)=1$$
+El uso general de las cadenas de Markov de orden superior incrementa el numero e parametros del modelo; una cadena general de Markov de orden $l$ en $m$ estados tiene $m^l(m-1)$ probabilidades de transicion independientes. Param $m=2$ hay modelos equivalentes, pero $M>2$ pueden ser representados en una varidad de patrones dependientes y estructuras de autocorrelacione. En ambos casos un incremento de 1 orden en la cadena de Markov requiere solo un parametro adicional.
+
+Los modelos de Raftery, quien denomina modelos "distribuciones de transicion mixtas" estan definidos como los procesos ${C_t}$ que toman valores $M={1,2,...,m}$ y satisfacen $$Pr(C_t=j_0|C_{t-1}=j_1,...,C_{t-l}=jl) = \sum_{i=1}^{l}\lambda_i q(j_i,j_0)$$
+Donde $\sum_{i=1}{l}\lambda=1$ y $Q=(q(j,k))$ es una matriz $m\times m$ con elementos no negativos que sus filas suman 1; cuyo lado derecho de la ecuacion esta acotada entre ceo y uno para todos los $j_0,j_1,...,j_l\in M$ 
