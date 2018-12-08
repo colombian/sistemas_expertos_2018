@@ -1,0 +1,129 @@
+---
+title: "Capitulo3"
+output: html_document
+---
+
+## Estimación por maximización direta del likelihood
+
+El likelihood de una Cadena de Markov Escondida (HMM), se puede representar por la siguiente ecuación:
+$$L_t = P_r (X^{(T)} = x^{(T)}) = \delta P(x_1) \Gamma P(x_2) ... \Gamma P(x_T)1'$$
+
+Siendo $\delta$ la distribución inicial y $P(x)$ la matriz diagonal de $m*m$ con densidad de probabilidad $p_i(x)$
+
+$L_T$ se puede calcular como $L_T = \alpha_T1'$ tomando $\alpha_1 = \delta P(x_1)$ y de forma recursiva:
+
+$\alpha_t = \alpha_{t-1} \Gamma P(x_t),$ para  $t=2,3,...,T$
+
+Si la cadena de Markov se asume como estacionaria $(\delta=\delta \Gamma)$, en ese caso $\alpha_0 = \delta$, por lo tanto:
+
+$\alpha_t = \alpha_{t-1} \Gamma P(x_t),$ para  $t=1,2,...,T$
+
+
+## Escalación del cálculo del likelihood
+
+El likelihood es un producto de matrices, no de escalares, es por ello que no se puede simplemente calcular el log del likelihood como la suma de los logs de todos sus factores. Se sugiere un método de cálcular el lokelihood que supone $log(p+q)$, en donde $p>q$, 
+
+$$log(p+q) = log(p)+log(1 + q/p) = log(p)+log(1+exp(log(q)-log(p)))$$
+
+El logaritmo de $L_T$ se calcula escalando el vector de probabilidades $\alpha_t$, es por ello que el vector se escala en cada $t$ entonces sus elementos se suman a 1, manteniendo la sumatoria de los logs de los factores escalados. Por lo tanto el $log(L_T)$ se puede definir como:
+
+$$log(L_T) = \sum_{t=1}^T log(w_t/w_{t-1}) = \sum_{t=1}^T log(\phi_{t-1}\Gamma P(x_t)1')$$
+
+Para calcular el log-likelihood de las observaciones $x_1, x_2,...,x_t$ dentro del modelo Poisson-HMM con almenos 2 estados, con matriz de probabilidades de transición $\Gamma$, vector de medias de estados dependientes $\lambda$, y distribución inicial $\delta$, se utiliza el siguiente códogi implementado en R.
+
+```{r}
+alpha <- oli2$delta * dpois(x[1], oli2$lambda)
+lscale <- log(sum(alpha))
+alpha <- alpha/sum(alpha)
+
+for (i in 2:T) {
+  #alpha <- alpha %*% Gamma*as.numeric(dpois(x[i], oli2$lambda))
+  lscale <- lscale+log(sum(alpha))
+  alpha <- alpha/sum(alpha)
+}
+lscale
+```
+
+
+## Maximización del likelihood sujeto a restricciones
+
+Primero se debe realizar una reparametrización para evitar las restricciones. Los elementos de $\Gamma$, los de $\lambda$ y el vector de medias de estados dependientes en una Poisson-HMM están sujetos a restricciones de no negatividad y de otro tipo.
+
+Las restricciones se pueden clasificar en 2 grupos. El primer grupo de restricciones son aquellas que dependen del estado de la distrubución que se haya elegido, por ejemplo, la probabilidad de éxito de una distribución binomial se encuentra entre 0 y 1.
+
+En el caso Poisson-HMM las restricciones mas importantes son:
+1. La media $\lambda_i$ del estado dependiente de la distribución debe ser no negativa, para $i=1,...,m$
+2. Las filas de la matriz de probabilidades de transición $\Gamma$ debe agregarse a 1, y todos los parametros $\gamma_{ij}$ deben ser no negativos.
+
+Para hacer la transformación de los parámetros, vamos a definir $\eta = log \lambda_i$, apra $i=1,...,m$ en donde $\eta \in \mathbb{R}$
+
+Luego de obtener la maximización del likelihood sin restricciones, se pueden obtener los parametros con restricciones transformando nuevamente: $\lambda_i = exp (\eta_i)$.
+
+La reparametrización de la matriz $\Gamma$ se hace de la siguiente manera:
+$$\sum_{j=1}^m \gamma_{ij} = 1 \hspace{1cm} (i=1,...,m)$$
+
+$\Gamma$ tiene $m^2$ entradas pero únicamente $m(m-1)$ parametros libres, por lo que las se puede transformar a numeros reales sin restricciones $\tau_{ij}, i \neq j$.
+
+Para el caso $m=3$ se define la matriz
+$$T = \begin{pmatrix}
+- & \tau_{12} & \tau_{13} \\
+\tau_{21} & - & \tau_{23} \\
+\tau_{31} & \tau_{32} & - \\
+\end{pmatrix}$$
+
+en donde $\tau{ij} \in \mathbb{R}$. De tal forma que $g : \mathbb{R} \rightarrow \mathbb{R}^+$ sea estrictamente una función creciente,
+$$g(x) = e^x \hspace{0.5cm} o \hspace{0.5cm} g(x) = \Bigg \{ \begin{array}{}
+e^x & x \leq0
+\\x+1 & x \geq0
+\end{array}$$
+
+Entonces:
+$$ v_{ij} = \Bigg \{ \begin{array}{}
+g(\tau_{ij}) & para & i \neq j
+\\1 & para & i = j
+\end{array}$$
+
+y:
+
+$\gamma_{ij} = \frac {v_{ij}} {\sum_{k=1}^m v_{ik}} \hspace{0.5cm} para \hspace{0.5cm} i,j = 1,2,...,m$ y $\Gamma = (\gamma_{ij})$
+
+Por lo tanto los parametros $\eta_i$ y $\tau_{ij}$ los llamaremos parametros de trabajo, mientras que los paramentros $\lambda_i$ y $\gamma_{ij}$ serán los parametros naturales.
+
+Utilizando estas transformaciones para $\Gamma$ y $\lambda$ el cálculo de los parametros de la maximización del likelihoos se pueden calcular así:
+1. Maximizar $L_T$ con respecto a los parametros de trabajo $T = \{\tau_{ij}\}$ y $\eta = (\eta_1,...,\eta_m)$
+2. Transformar los estimadores de los parametros de trabajo en los estimadores de los parametros naturales: $T \rightarrow \Gamma$, $\eta \rightarrow \lambda$.
+
+A continuación se presenta un ejemplo de la una función en código de R haciendo referencia a la transformación de los parametros naturales de Poisson en parametros de trabajo y viceversa.
+
+Transformación de los parametros naturales de Poisson en parametros de trabajo
+```{r}
+pois.HMM.pn2pw <- function(m,lambda,gamma,delta=NULL,stationary=TRUE)
+{
+ tlambda <- log(lambda)
+ foo     <- log(gamma/diag(gamma))
+ tgamma  <- as.vector(foo[!diag(m)])
+ if(stationary) {tdelta <-NULL} else {tdelta<-log(delta[-1]/delta[1])}
+ parvect <- c(tlambda,tgamma,tdelta)
+ return(parvect)
+}
+
+```
+
+
+Transformación de los parametros de trabajo de Poisson en parametros naturales
+```{r}
+pois.HMM.pw2pn <- function(m,parvect,stationary=TRUE)
+{
+ lambda        <- exp(parvect[1:m])
+ gamma         <- diag(m)
+ gamma[!gamma] <- exp(parvect[(m+1):(m*m)])
+ gamma         <- gamma/apply(gamma,1,sum)
+ if(stationary) {delta<-solve(t(diag(m)-gamma+1),rep(1,m))} else
+                {foo<-c(1,exp(parvect[(m*m+1):(m*m+m-1)]))
+                delta<-foo/sum(foo)}
+ return(list(lambda=lambda,gamma=gamma,delta=delta))
+}
+```
+
+
+
