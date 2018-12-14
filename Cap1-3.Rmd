@@ -1,13 +1,23 @@
 ---
-title: "R Notebook"
-output:
-  html_document:
-    df_print: paged
+title: "Model Structure, Properties and Methods"
+subtitle: "Cap铆tulos 1, 2 y 3"
+output: html_document
 ---
 
-# Mezclas
+### Librer铆as
+```{r}
+library(dplyr)
+library(readxl)
+library(plotly)
+```
 
-Al tener una colecci髇 de datos observable, y estudiarlo a traves de correlaciones, podemos encontrar que puede tener 1 o mas parametros que rigen el comportamiento de los datos. La herramienta que nos permite el analisis de los parametros y como estos impactan el comportamiento de los datos es Hiden Markiv models o H.M.M.
+
+
+# CAPITULO 1
+
+### Mezclas
+
+Al tener una coleccion de datos observable, y estudiarlo a traves de correlaciones, podemos encontrar que puede tener 1 o mas parametros que rigen el comportamiento de los datos. La herramienta que nos permite el analisis de los parametros y como estos impactan el comportamiento de los datos es Hiden Markiv models o H.M.M.
 
 Los H.M.M son modelos de distribucion probabilisticos de proposito general para una o m谩s variables. Y es especifico para casos de sieres de tiempo, categoricas y continuas.
 
@@ -139,7 +149,7 @@ plot_ly(data = datos, x=~anio,  y=~frecuencia, type = 'bar')
 ```
 
 
-## Modelo de mezclas independientes
+### Modelo de mezclas independientes
 
 Al utilizar la distribucion de poisson $p(x) = \frac{exp(-\lambda)\lambda^x}{x!}$ tenemos que la media es de 15, pero segun poisson la media y la varianza son iguales, para este ejemplo la varianza es de 20.33, no coinciden con la distribucion de Pisson, sin embargo el fenomeno satisface las condiciones para utilizar la distribucion de Poisson. Se plantea la hipostesis, que el resultado esta siendo afectado por 1 de 2 distribuciones de Poisson con medias $\lambda_1, \lambda_2$.
 
@@ -155,7 +165,7 @@ $C=\left\{ \begin{array}{lcc}
    
 La funcion de probabilidad para $X$ esta dada por $$\sum_{i=1}{\delta_i p_i}$$
 
-## Estimacion del parametro
+### Estimacion del parametro
 
 Para la estimacion de los parametros un de una distribucion mixta esta dada por la maximo parentesco (Maximum Likeleyhood) la cual es la misma es para casos discretos o continuos. $$L(\theta_1,...,\theta_m,\delta_1,...,\delta_m)= \prod_{j=1}^{n}\sum_{i=1}^{m}\delta_i p_i(x_j,\theta_i)$$. Los $\theta$ son los vectores de los parametros de la distribucion y los $\delta$ son los parametros de mezcla, los cuales suman 1; los $x_i,...,x_n$ son las observaciones.
 
@@ -214,7 +224,7 @@ Como podemos apreciar a partir del $\delta_2$ no hay ganancia, y el algoritmo es
 
 Una mejor apreciacion de mejor ajuste es a traves de la esperanza matematica y la varianza $E(X)=\sum_i\delta_i\sigma_i$ $Var(X)=E(X^2)-(E(X))^2$ siendo $E(X^2)=\sum_i\delta_i(\lambda_i+\lambda_i^2)$
 
-## Cadenas de Markov
+### Cadenas de Markov
 
 Una secuencia de variales aleatorias discretas ${C_t:t\in \mathbb{N}}$ son consideradas como una cadena de Markov si para todos los $t\in \mathbb{N}$ se satisface $$Pr(C_{t+1}|C_t...C_1)=Pr(C_{t+1}|C_t)$$
 
@@ -239,7 +249,9 @@ La probabilidad no condicionada $Pc(C_t=j)$ de una cadena de Markov, en un estad
 
 $u(t)=(Pr(C_t=1),...,Pr(C_t=m)), \in \mathbb{N}$ Es decir nos permite saber el estado actual de la matriz. Siendo $u(1)$ la distribucion incial de la matriz, para deducir la distribucion  en el tiempo $t+1$ desde $t$ solo multiplicamos por la matriz de probabilidad de transicion:
 $$u(t+1)=u(1)\Gamma$$
+
 ### Distribuciones Estacionarias
+
 Una cadena de Markov con matriz de probabilidad de transicion $\Gamma$ se dice que tiene una distribucion $\delta$ (un vector fila con elementos no negativos) si $\delta\Gamma=\delta$ y $\delta1'=1$.
 
 El primer requerimiento expresa la estacionalidad y el segundo que $\delta$ es de echo una distribucion de probabilidad.
@@ -303,3 +315,251 @@ El uso general de las cadenas de Markov de orden superior incrementa el numero e
 
 Los modelos de Raftery, quien denomina modelos "distribuciones de transicion mixtas" estan definidos como los procesos ${C_t}$ que toman valores $M={1,2,...,m}$ y satisfacen $$Pr(C_t=j_0|C_{t-1}=j_1,...,C_{t-l}=jl) = \sum_{i=1}^{l}\lambda_i q(j_i,j_0)$$
 Donde $\sum_{i=1}{l}\lambda=1$ y $Q=(q(j,k))$ es una matriz $m\times m$ con elementos no negativos que sus filas suman 1; cuyo lado derecho de la ecuacion esta acotada entre ceo y uno para todos los $j_0,j_1,...,j_l\in M$ 
+
+
+
+
+
+# CAPITULO 2
+### Modelo de Markov escondidas
+### Definiciones y propiedades 
+
+### Modelo simple de Markov escondido
+
+Considerando los visto en la serie de terremotos en el capitulo anterior, se puede apreciar que las observaciones no tienen un limite de cantidad. Debido a esto, utilizar la distribucion de Poisson es la decision natural. En el capitulo uno se considero como puede afectar la interpretacion de la serie como una mezcla de distribuciones de Poisson, Cada una con una media $\lambda_m$ donde m se refiere a la serie de datos y cada distribucion tiene un posibilidad de $\delta_m$ donde 
+\[\sum_{ i = 1}^{\infty} \delta_i = 1\]
+
+
+Un modelo como una mezcla independiente se considera que no representara correctamente el modelo de los terremotos debido a que por definicion estas mezcla no tienen dependecia alguna con los valores anteriores sin embargo de acuerdo con los resultados de la grafica ACF una dependencia muy baja entre las observaciones, pero por fines ilutrativos se obtendra el valor de la correlaciones. 
+
+
+```{r}
+muestra <- read_xlsx("EarthQuakeData.xlsx", sheet="Sheet2", skip = 2)[-109,] %>% 
+  rename("x" = !!names(.[2])) %>% 
+  select(x)
+
+acf(muestra$x)
+```
+
+
+
+### Lo Basico
+
+La cadena escondida de Markov es una mezcla particular debido a su dependencia. Donde toda observacion $X_t$ tiene adicionalmente una categoria $C_t$ la cual se indica a cual de las distribuciones pertenece mientras que se puede calcular las probabilidades de la siguiente manera: 
+\[Pr(C_t|C_{t-1}),     t = 2,3..\]
+\[Pr(X_t|X_{t-1}, C_{})  t = 2,3.\]
+
+Para este modelo se deben considerar dos parametros, primero un parametro no observado del proceso, $C_t$ que satisface todas las propiedades de Markov, y un segundo parametro dependiente del estado, $X_t$ en el cual la distribuci贸n de $X$ depende unicamente de estado actual, $C$. 
+
+Si la cadena de Markov tiene m estados, entonces se le conoce como HMM de m-estados. En este caso estamos considerando que apesar que ya se calcularos los valores de $\delta_i$, existe adicionalmente una matriz de transicion como:
+\[ \Gamma = 
+\begin{bmatrix}
+    \gamma_{11}       & \gamma_{12}  \\
+    \gamma_{21}       & \gamma_{22}  \\
+\end{bmatrix}\]
+
+En contraste, en un caso de mezclas independientes, la distribucion de $C_t$, el estado en el tiempo $t$, si depende de $C_{t-1}$. Por lo tanto, para considerar como se pueden representar las distribuciones de maneras discretas y continuas se debe puede utilizar como base la siguiente expresion para el estado $i = 1,2,3..$ 
+\[p_i(x)= Pr(X_t=x | C_t = i) \]
+
+$p_i$ es la probabilidad de $X_t$ si la cadena de Markov esta en el estado $i$ en el momento $t$. En caso de variables continuas es necesarios considerar que la probabilidad como una funcion de densidad. A estas distribuciones $p_i$ se les consideran como distribuciones dependientes del estado, teniendose $m$ estados. 
+
+
+### Distribucion Marginal
+
+Ocacionalmente se necesita la distribucion marginal de $X_t$ y distribuciones marginales mas elevadas, tal como $(X_t, X_{t+k})$. Estos resultados deben ser derivados de los casos de la matrices homogenias pero que no son necesariamente estacionarias. 
+
+### Univariate distributions 
+
+Para valores discretos observados $X_t$, definiendo $u_i(t) = Pr(C_t = i)$ para $t = 1,2 ...T$ se tiene
+
+\[Pr(X_t = x) = \sum_{i = 1}^{m} Pr(C_t = i) Pr(X_t = x| C_t = i) = \sum_{i = 1}^{m} u_i(t)p_i(x)
+\]
+
+La expreci贸n se puede escribir de forma matricial de la siguiente manera:
+\[Pr(X_t = x) = (u_1(t)...u_m(t))\begin{bmatrix}
+    p_1(x)  &     & 0  \\
+      &   \ddots & \\
+    0   &    & p_m(x) \\
+\end{bmatrix} 
+
+\begin{bmatrix} 1 \\
+              \vdots \\
+              1 \\
+ \end{bmatrix} \]
+ 
+Donde $P(x)$ es definida como la diagonal de los $p_i(x)$. Considerando que $u_i(t) = u(1)\Gamma^{t-1}$, se obtiene: 
+\[Pr(X_t = x) = u(1)\Gamma^{t-1}P(x) 1^{`}\]
+
+
+Pero si se consideran el cambio de estado como una distribuci贸n estacionaria entonces se puede reescribir teniendo en cuenta que: $\delta\Gamma^{t-1} = \delta$ para todo $t \in \mathbb{N}$ se obtiene: 
+
+\[Pr(X_t = x) = \delta P(x)1^{`}\]
+
+
+### Momentos 
+
+Primero debemos observar que:
+\[E(X_t) = \sum_{i=1}^{m}E(X_t|C_t=i)Pr(C_t=i)\]
+
+Que al considerarla como un caso estacionario seria:
+\[E(X_t) = \sum_{i=1}^{m}\delta_i E(X_t|C_t=i)\]
+
+En base a la ecuacion de arriba y considerado las propiedades de los momentos y de las cadenas se obtienen los siguientes momentos:
+
+\[E(X_t) = \delta_1 \lambda_1 + \delta_2 \lambda_2\]
+\[Var(X_t) = E(X_t) \delta_1 \delta_2 ( \lambda_1 +\lambda_2)^2 > E(X_t)\]
+\[Cov(X_t, X_{t+k}) = \delta_1 \delta_2 ( \lambda_1 +\lambda_2)^2(1-\gamma_{12}-\gamma_{21})^k , For k \in \mathbb{N} \]
+
+Cabe mencionar que la formula resultante de la covarianza tiene una forma tal que cuando las medias son iguales $\lambda_1 = \lambda_2$  la covarianza se vuelve cero. 
+
+### Likelihood
+
+
+El objetivo de la seccion desarrollar la formula del likelihood $L_T$ de $T$ observaciones consecuentes asumiendo que son el resultado de una HMM de m estados, Esta formula existe pero para obtenerse el resultado es necesario calcular al rededor de $m^T$ terminimos de $2T$ factores, aparentando requerir $O(Tm^T)$. Sin embargo hace tiempo esta comprobado que se puede calcular con $O(Tm^2)$ operaciones. Esto es posible mediante la estimacion de los parametros por medio de optimizacion numerica.
+
+
+### Likelihood en general 
+
+Consdierando que el likelihood de una HMM en general. Supongamos una secuencias de observaciones $x_1, x_2, .... x_T$ generador por este tipo de modelo. Se busca la probabilidad $L_T$ de observar esta secuencia, como calculado bajo el modelo m-estado HMM que inicialmente tiene una distribuci贸n $\delta$ y $\Gamma$ de la cadena de Markov. 
+
+
+
+
+# CAPITULO 3
+
+
+### Estimacion por maximizacion direta del likelihood
+
+El likelihood de una Cadena de Markov Escondida (HMM), se puede representar por la siguiente ecuacion:
+$$L_t = P_r (X^{(T)} = x^{(T)}) = \delta P(x_1) \Gamma P(x_2) ... \Gamma P(x_T)1'$$
+
+Siendo $\delta$ la distribuci贸n inicial y $P(x)$ la matriz diagonal de $m*m$ con densidad de probabilidad $p_i(x)$
+
+$L_T$ se puede calcular como $L_T = \alpha_T1'$ tomando $\alpha_1 = \delta P(x_1)$ y de forma recursiva:
+
+$\alpha_t = \alpha_{t-1} \Gamma P(x_t),$ para  $t=2,3,...,T$
+
+Si la cadena de Markov se asume como estacionaria $(\delta=\delta \Gamma)$, en ese caso $\alpha_0 = \delta$, por lo tanto:
+
+$\alpha_t = \alpha_{t-1} \Gamma P(x_t),$ para  $t=1,2,...,T$
+
+
+### Escalacion del calculo del likelihood
+
+El likelihood es un producto de matrices, no de escalares, es por ello que no se puede simplemente calcular el log del likelihood como la suma de los logs de todos sus factores. Se sugiere un metodo de calcular el likelihood que supone $log(p+q)$, en donde $p>q$, 
+
+$$log(p+q) = log(p)+log(1 + q/p) = log(p)+log(1+exp(log(q)-log(p)))$$
+
+El logaritmo de $L_T$ se calcula escalando el vector de probabilidades $\alpha_t$, es por ello que el vector se escala en cada $t$ entonces sus elementos se suman a 1, manteniendo la sumatoria de los logs de los factores escalados. Por lo tanto el $log(L_T)$ se puede definir como:
+
+$$log(L_T) = \sum_{t=1}^T log(w_t/w_{t-1}) = \sum_{t=1}^T log(\phi_{t-1}\Gamma P(x_t)1')$$
+
+Para calcular el log-likelihood de las observaciones $x_1, x_2,...,x_t$ dentro del modelo Poisson-HMM con, al menos 2 estados, con matriz de probabilidades de transicion $\Gamma$, vector de medias de estados dependientes $\lambda$, y distribucion inicial $\delta$, se utiliza el siguiente codigo implementado en R.
+
+```{r}
+alpha <- params$delta * dpois(x[1], params$lambda)
+lscale <- log(sum(alpha))
+alpha <- alpha/sum(alpha)
+
+for (i in 2:T) {
+  #alpha <- alpha %*% Gamma*as.numeric(dpois(x[i], params$lambda))
+  lscale <- lscale+log(sum(alpha))
+  alpha <- alpha/sum(alpha)
+}
+lscale
+```
+
+
+### Maximizacion del likelihood sujeto a restricciones
+
+Primero se debe realizar una reparametrizacion para evitar las restricciones. Los elementos de $\Gamma$, los de $\lambda$ y el vector de medias de estados dependientes en una Poisson-HMM estan sujetos a restricciones de no negatividad y de otro tipo.
+
+Las restricciones se pueden clasificar en 2 grupos. El primer grupo de restricciones son aquellas que dependen del estado de la distrubucion que se haya elegido, por ejemplo, la probabilidad de exito de una distribucion binomial se encuentra entre 0 y 1.
+
+En el caso Poisson-HMM las restricciones mas importantes son:
+1. La media $\lambda_i$ del estado dependiente de la distribucion debe ser no negativa, para $i=1,...,m$
+2. Las filas de la matriz de probabilidades de transicion $\Gamma$ debe agregarse a 1, y todos los parametros $\gamma_{ij}$ deben ser no negativos.
+
+Para hacer la transformacion de los parametros, vamos a definir $\eta = log \lambda_i$, para $i=1,...,m$ en donde $\eta \in \mathbb{R}$
+
+Luego de obtener la maximizacion del likelihood sin restricciones, se pueden obtener los parametros con restricciones transformando nuevamente: $\lambda_i = exp (\eta_i)$.
+
+La reparametrizacion de la matriz $\Gamma$ se hace de la siguiente manera:
+$$\sum_{j=1}^m \gamma_{ij} = 1 \hspace{1cm} (i=1,...,m)$$
+
+$\Gamma$ tiene $m^2$ entradas pero unicamente $m(m-1)$ parametros libres, por lo que las se puede transformar a numeros reales sin restricciones $\tau_{ij}, i \neq j$.
+
+Para el caso $m=3$ se define la matriz
+$$T = \begin{pmatrix}
+- & \tau_{12} & \tau_{13} \\
+\tau_{21} & - & \tau_{23} \\
+\tau_{31} & \tau_{32} & - \\
+\end{pmatrix}$$
+
+en donde $\tau{ij} \in \mathbb{R}$. De tal forma que $g : \mathbb{R} \rightarrow \mathbb{R}^+$ sea estrictamente una funcion creciente,
+$$g(x) = e^x \hspace{0.5cm} o \hspace{0.5cm} g(x) = \Bigg \{ \begin{array}{}
+e^x & x \leq0
+\\x+1 & x \geq0
+\end{array}$$
+
+Entonces:
+$$ v_{ij} = \Bigg \{ \begin{array}{}
+g(\tau_{ij}) & para & i \neq j
+\\1 & para & i = j
+\end{array}$$
+
+y:
+
+$\gamma_{ij} = \frac {v_{ij}} {\sum_{k=1}^m v_{ik}} \hspace{0.5cm} para \hspace{0.5cm} i,j = 1,2,...,m$ y $\Gamma = (\gamma_{ij})$
+
+Por lo tanto los parametros $\eta_i$ y $\tau_{ij}$ los llamaremos parametros de trabajo, mientras que los paramentros $\lambda_i$ y $\gamma_{ij}$ seran los parametros naturales.
+
+Utilizando estas transformaciones para $\Gamma$ y $\lambda$ el calculo de los parametros de la maximizacion del likelihood se pueden calcular asi:
+1. Maximizar $L_T$ con respecto a los parametros de trabajo $T = \{\tau_{ij}\}$ y $\eta = (\eta_1,...,\eta_m)$
+2. Transformar los estimadores de los parametros de trabajo en los estimadores de los parametros naturales: $T \rightarrow \Gamma$, $\eta \rightarrow \lambda$.
+
+A continuacion se presenta un ejemplo de la una funcion en codigo de R haciendo referencia a la transformacion de los parametros naturales de Poisson en parametros de trabajo y viceversa.
+
+
+### Transformacion de los parametros naturales de Poisson en parametros de trabajo
+
+```{r}
+pois.HMM.pn2pw <- function(m,lambda,gamma,delta=NULL,stationary=TRUE)
+{
+ tlambda <- log(lambda)
+ foo     <- log(gamma/diag(gamma))
+ tgamma  <- as.vector(foo[!diag(m)])
+ if(stationary) {tdelta <-NULL} else {tdelta<-log(delta[-1]/delta[1])}
+ parvect <- c(tlambda,tgamma,tdelta)
+ return(parvect)
+}
+
+```
+
+
+### Transformacion de los parametros de trabajo de Poisson en parametros naturales
+
+```{r}
+pois.HMM.pw2pn <- function(m,parvect,stationary=TRUE)
+{
+ lambda        <- exp(parvect[1:m])
+ gamma         <- diag(m)
+ gamma[!gamma] <- exp(parvect[(m+1):(m*m)])
+ gamma         <- gamma/apply(gamma,1,sum)
+ if(stationary) {delta<-solve(t(diag(m)-gamma+1),rep(1,m))} else
+                {foo<-c(1,exp(parvect[(m*m+1):(m*m+m-1)]))
+                delta<-foo/sum(foo)}
+ return(list(lambda=lambda,gamma=gamma,delta=delta))
+}
+```
+
+
+
+
+
+
+
+
+
+
+
